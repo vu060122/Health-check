@@ -1,43 +1,963 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <!-- 背景漸層：清新的藍綠色調 (Teal) -->
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2dd4bf" /> <!-- 淺藍綠 -->
-      <stop offset="100%" stop-color="#0f766e" /> <!-- 深藍綠 -->
-    </linearGradient>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>健康追蹤</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    // --- Local Storage Data Management ---
+    const STORAGE_KEY = 'health_tracking_records';
     
-    <!-- 圖示陰影增加立體層次感 -->
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#042f2e" flood-opacity="0.3"/>
-    </filter>
-  </defs>
+    // 初始化或讀取紀錄
+    const loadRecordsFromLocal = () => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("解析本地資料失敗", e);
+          return [];
+        }
+      }
+      return [];
+    };
 
-  <!-- 滿版正方形背景 (iOS 會自動幫我們裁切圓角) -->
-  <rect width="1024" height="1024" fill="url(#bg)" />
+    const saveRecordsToLocal = (recordsToSave) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsToSave));
+    };
 
-  <!-- 中央主圖示群組 -->
-  <g filter="url(#shadow)">
-    <!-- 病歷夾/報告紙張底板 -->
-    <rect x="262" y="180" width="500" height="664" rx="56" fill="#ffffff" />
+    // 生成隨機 ID
+    const generateId = () => {
+      return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    };
+
+    // --- Global State ---
+    let records = loadRecordsFromLocal();
+    const DEFAULT_CATEGORIES = ['乳房', '肺部', '腸胃'];
     
-    <!-- 病歷夾頂部金屬夾/裝飾 -->
-    <rect x="412" y="140" width="200" height="80" rx="32" fill="#99f6e4" />
+    // Form State
+    let editingRecordId = null;
+    let abnormalities = [];
+    let editingAbId = null;
+    let activeTab = '全部';
+    let activeTrackingTab = '全部';
+    let recordToDeleteId = null;
 
-    <!-- 報告上的文字紀錄線條 -->
-    <line x1="362" y1="360" x2="662" y2="360" stroke="#ccfbf1" stroke-width="32" stroke-linecap="round"/>
-    <line x1="362" y1="460" x2="542" y2="460" stroke="#ccfbf1" stroke-width="32" stroke-linecap="round"/>
+    // --- 動態注入 iOS 桌面圖示 ---
+    const setupPWAIcon = () => {
+      const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><defs><linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2dd4bf" /><stop offset="100%" stop-color="#0f766e" /></linearGradient><filter id="iconShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#042f2e" flood-opacity="0.3" /></filter><linearGradient id="highlight" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" /><stop offset="100%" stop-color="#ffffff" stop-opacity="0" /></linearGradient></defs><rect width="1024" height="1024" fill="url(#bgGradient)" /><rect width="1024" height="1024" fill="url(#highlight)" /><g filter="url(#iconShadow)"><rect x="312" y="232" width="400" height="520" rx="48" fill="#ffffff" /><line x1="392" y1="332" x2="632" y2="332" stroke="#ccfbf1" stroke-width="24" stroke-linecap="round" /><line x1="392" y1="412" x2="552" y2="412" stroke="#ccfbf1" stroke-width="24" stroke-linecap="round" /><circle cx="512" cy="612" r="160" fill="#0d9488" /><path d="M 392 612 L 452 612 L 492 532 L 532 692 L 572 612 L 632 612" fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" /></g></svg>`;
+      const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgIcon)}`;
 
-    <!-- 醫療追蹤徽章 -->
-    <circle cx="512" cy="670" r="180" fill="#0d9488" />
+      if (!document.querySelector('link[rel="apple-touch-icon"]')) {
+        const appleIcon = document.createElement('link');
+        appleIcon.rel = 'apple-touch-icon';
+        appleIcon.href = svgDataUrl;
+        document.head.appendChild(appleIcon);
+
+        const favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        favicon.type = 'image/svg+xml';
+        favicon.href = svgDataUrl;
+        document.head.appendChild(favicon);
+      }
+    };
+
+    // --- Core Render Logic ---
+    const renderApp = () => {
+      // 確保資料是最新的排序 (由新到舊)
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const availableCategories = getAvailableCategories();
+      const pastHospitals = getPastHospitals();
+      
+      // Update Datalists
+      updateSelectOptions(categorySelect, DEFAULT_CATEGORIES, availableCategories);
+      hospitalDatalist.innerHTML = pastHospitals.map(h => `<option value="${h}">`).join('');
+
+      // Auto-correct tabs
+      if (activeTab !== '全部' && !availableCategories.includes(activeTab)) activeTab = '全部';
+      
+      const activeTrackingData = getActiveTracking();
+      const activeCats = activeTrackingData.map(t => t.category);
+      if (activeTrackingTab !== '全部' && !activeCats.includes(activeTrackingTab)) activeTrackingTab = '全部';
+
+      renderActiveTracking(activeTrackingData);
+      renderHistory(availableCategories);
+      lucide.createIcons();
+    };
+
+    // --- Data Derivation ---
+    const getAvailableCategories = () => {
+      const cats = new Set(DEFAULT_CATEGORIES);
+      records.forEach(r => cats.add(r.category));
+      return Array.from(cats);
+    };
+
+    const getPastHospitals = () => {
+      const hosps = new Set();
+      records.forEach(r => { if(r.hospital) hosps.add(r.hospital) });
+      return Array.from(hosps);
+    };
+
+    const getActiveTracking = () => {
+      const latest = {};
+      records.forEach(record => {
+        if (!latest[record.category]) latest[record.category] = record;
+      });
+      return Object.values(latest).filter(r => r.abnormalities && r.abnormalities.length > 0);
+    };
+
+    // --- UI Updaters ---
+    let categorySelect, customCategoryDiv, customCategoryInput, hospitalDatalist;
     
-    <!-- 心電圖/健康活動波浪線 -->
-    <path 
-      d="M 370 670 L 440 670 L 485 550 L 535 790 L 585 670 L 654 670" 
-      fill="none" 
-      stroke="#ffffff" 
-      stroke-width="36" 
-      stroke-linecap="round" 
-      stroke-linejoin="round"
-    />
-  </g>
-</svg>
+    const updateSelectOptions = (selectEl, defaults, all) => {
+      const currentValue = selectEl.value;
+      selectEl.innerHTML = '';
+      all.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        selectEl.appendChild(option);
+      });
+      const customOpt = document.createElement('option');
+      customOpt.value = 'custom';
+      customOpt.className = 'font-bold text-teal-600';
+      customOpt.textContent = '＋ 自訂新檢查項目';
+      selectEl.appendChild(customOpt);
+      
+      if (all.includes(currentValue) || currentValue === 'custom') {
+        selectEl.value = currentValue;
+      } else {
+        selectEl.value = all[0];
+      }
+      toggleCustomCategory();
+    };
+
+    const toggleCustomCategory = () => {
+      if (categorySelect.value === 'custom') {
+        customCategoryDiv.classList.remove('hidden');
+        customCategoryInput.focus();
+      } else {
+        customCategoryDiv.classList.add('hidden');
+      }
+    };
+
+    const renderAbnormalitiesList = () => {
+      const abListContainer = document.getElementById('abListContainer');
+      abListContainer.innerHTML = '';
+      if (abnormalities.length === 0) return;
+
+      abnormalities.forEach(item => {
+        const div = document.createElement('div');
+        const isEditing = editingAbId === item.id;
+        div.className = `flex justify-between items-start p-3 border rounded-lg text-sm transition-colors ${isEditing ? 'bg-amber-100 border-amber-300' : 'bg-amber-50 border-amber-100'}`;
+        
+        let metaHtml = '';
+        if (item.location || item.size) {
+          metaHtml = `<div class="text-amber-700 mt-1 flex flex-wrap gap-2 text-xs">
+            ${item.location ? `<span class="bg-amber-100/50 px-2 py-0.5 rounded border border-amber-200/50">位置: ${item.location}</span>` : ''}
+            ${item.size ? `<span class="bg-amber-100/50 px-2 py-0.5 rounded border border-amber-200/50">大小/備註: ${item.size}</span>` : ''}
+          </div>`;
+        }
+
+        div.innerHTML = `
+          <div>
+            <span class="font-semibold text-amber-800">${item.type}</span>
+            ${metaHtml}
+          </div>
+          <div class="flex gap-1">
+            <button class="edit-ab-btn text-amber-600 hover:text-teal-600 transition-colors p-1" data-id="${item.id}" title="編輯">
+              <i data-lucide="edit-2" class="w-4 h-4"></i>
+            </button>
+            <button class="del-ab-btn text-amber-600 hover:text-red-500 transition-colors p-1" data-id="${item.id}" title="刪除">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+        abListContainer.appendChild(div);
+      });
+
+      // Attach events
+      document.querySelectorAll('.edit-ab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const id = btn.getAttribute('data-id');
+          const item = abnormalities.find(a => a.id === id);
+          if (item) {
+            editingAbId = item.id;
+            document.getElementById('abTypeInput').value = item.type;
+            document.getElementById('abLocationInput').value = item.location || '';
+            document.getElementById('abSizeInput').value = item.size || '';
+            updateAbInputUI();
+            renderAbnormalitiesList();
+            lucide.createIcons();
+          }
+        });
+      });
+
+      document.querySelectorAll('.del-ab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const id = btn.getAttribute('data-id');
+          abnormalities = abnormalities.filter(a => a.id !== id);
+          if (editingAbId === id) cancelAbEdit();
+          renderAbnormalitiesList();
+        });
+      });
+    };
+
+    const updateAbInputUI = () => {
+      const abInputContainer = document.getElementById('abInputContainer');
+      const editingAbLabel = document.getElementById('editingAbLabel');
+      const saveAbBtn = document.getElementById('saveAbBtn');
+      const saveAbText = document.getElementById('saveAbText');
+      const cancelAbBtn = document.getElementById('cancelAbBtn');
+
+      if (editingAbId) {
+        abInputContainer.classList.replace('bg-slate-50', 'bg-amber-50');
+        abInputContainer.classList.replace('border-slate-200', 'border-amber-200');
+        editingAbLabel.classList.remove('hidden');
+        saveAbBtn.classList.replace('bg-slate-200', 'bg-amber-200');
+        saveAbBtn.classList.replace('text-slate-700', 'text-amber-800');
+        saveAbBtn.classList.replace('hover:bg-slate-300', 'hover:bg-amber-300');
+        saveAbText.textContent = '更新異常';
+        cancelAbBtn.classList.remove('hidden');
+      } else {
+        abInputContainer.classList.replace('bg-amber-50', 'bg-slate-50');
+        abInputContainer.classList.replace('border-amber-200', 'border-slate-200');
+        editingAbLabel.classList.add('hidden');
+        saveAbBtn.classList.replace('bg-amber-200', 'bg-slate-200');
+        saveAbBtn.classList.replace('text-amber-800', 'text-slate-700');
+        saveAbBtn.classList.replace('hover:bg-amber-300', 'hover:bg-slate-300');
+        saveAbText.textContent = '加入異常紀錄';
+        cancelAbBtn.classList.add('hidden');
+      }
+      checkAbSaveBtnState();
+    };
+
+    const checkAbSaveBtnState = () => {
+      document.getElementById('saveAbBtn').disabled = document.getElementById('abTypeInput').value.trim() === '';
+    };
+
+    const cancelAbEdit = () => {
+      editingAbId = null;
+      document.getElementById('abTypeInput').value = '';
+      document.getElementById('abLocationInput').value = '';
+      document.getElementById('abSizeInput').value = '';
+      updateAbInputUI();
+      renderAbnormalitiesList();
+    };
+
+    const toggleReportText = () => {
+      const reportTextDiv = document.getElementById('reportTextDiv');
+      if (document.getElementById('hasReportCheckbox').checked) {
+        reportTextDiv.classList.remove('hidden');
+      } else {
+        reportTextDiv.classList.add('hidden');
+      }
+    };
+
+    const setFormErrorMsg = (msg) => {
+      const formError = document.getElementById('formError');
+      if (msg) {
+        formError.textContent = msg;
+        formError.classList.remove('hidden');
+      } else {
+        formError.classList.add('hidden');
+        formError.textContent = '';
+      }
+    };
+
+    const resetMainForm = () => {
+      editingRecordId = null;
+      document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+      categorySelect.value = DEFAULT_CATEGORIES[0];
+      document.getElementById('customCategoryInput').value = '';
+      document.getElementById('hospitalInput').value = '';
+      document.getElementById('adviceInput').value = '';
+      document.getElementById('freqValueInput').value = '';
+      document.getElementById('freqUnitSelect').value = '月';
+      abnormalities = [];
+      document.getElementById('hasReportCheckbox').checked = false;
+      document.getElementById('reportTextInput').value = '';
+      
+      toggleCustomCategory();
+      toggleReportText();
+      cancelAbEdit();
+      renderAbnormalitiesList();
+      setFormErrorMsg('');
+
+      // UI Reset
+      const formContainer = document.getElementById('formContainer');
+      const saveRecordBtn = document.getElementById('saveRecordBtn');
+      formContainer.classList.replace('border-amber-300', 'border-slate-100');
+      formContainer.classList.remove('ring-2', 'ring-amber-100');
+      document.getElementById('formTitleIcon').innerHTML = '<i data-lucide="plus" class="w-5 h-5 text-teal-500"></i>';
+      document.getElementById('formTitleText').textContent = '新增追蹤紀錄';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+      saveRecordBtn.className = 'w-full py-3 font-semibold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 mt-4 bg-teal-600 hover:bg-teal-700 text-white';
+      document.getElementById('saveRecordText').textContent = '儲存本次紀錄';
+      lucide.createIcons();
+    };
+
+    const loadRecordIntoForm = (record) => {
+      editingRecordId = record.id;
+      document.getElementById('dateInput').value = record.date;
+      
+      const available = getAvailableCategories();
+      if (available.includes(record.category)) {
+        categorySelect.value = record.category;
+        document.getElementById('customCategoryInput').value = '';
+      } else {
+        categorySelect.value = 'custom';
+        document.getElementById('customCategoryInput').value = record.category;
+      }
+      toggleCustomCategory();
+
+      document.getElementById('hospitalInput').value = record.hospital || '';
+      document.getElementById('adviceInput').value = record.advice || '';
+      document.getElementById('freqValueInput').value = record.frequency?.value || '';
+      document.getElementById('freqUnitSelect').value = record.frequency?.unit || '月';
+      abnormalities = record.abnormalities ? [...record.abnormalities] : [];
+      
+      document.getElementById('hasReportCheckbox').checked = record.hasReport || false;
+      document.getElementById('reportTextInput').value = record.reportText || '';
+      toggleReportText();
+
+      cancelAbEdit();
+      renderAbnormalitiesList();
+      setFormErrorMsg('');
+
+      // UI update for editing state
+      const formContainer = document.getElementById('formContainer');
+      const saveRecordBtn = document.getElementById('saveRecordBtn');
+      formContainer.classList.replace('border-slate-100', 'border-amber-300');
+      formContainer.classList.add('ring-2', 'ring-amber-100');
+      document.getElementById('formTitleIcon').innerHTML = '<i data-lucide="edit-2" class="w-5 h-5 text-amber-500"></i>';
+      document.getElementById('formTitleText').textContent = '編輯追蹤紀錄';
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+      saveRecordBtn.className = 'w-full py-3 font-semibold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 mt-4 bg-amber-500 hover:bg-amber-600 text-white';
+      document.getElementById('saveRecordText').textContent = '更新此筆紀錄';
+      lucide.createIcons();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // --- Card Rendering Generators ---
+    const generateAbnormalitiesHtml = (abs) => {
+      if (!abs || abs.length === 0) return `<div class="mb-4 text-sm text-slate-400 italic">無異常發現紀錄</div>`;
+      
+      let listHtml = abs.map(item => `
+        <li class="text-sm text-slate-700 flex items-start gap-2">
+          <span class="mt-1 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+          <div>
+            <span class="font-medium">${item.type}</span>
+            <span class="text-slate-500 ml-2">
+              ${item.location ? `[${item.location}] ` : ''}
+              ${item.size ? item.size : ''}
+            </span>
+          </div>
+        </li>
+      `).join('');
+
+      return `
+        <div class="mb-4 bg-slate-50 rounded-lg p-3 border border-slate-100">
+          <p class="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-500"></i> 異常發現
+          </p>
+          <ul class="space-y-2">${listHtml}</ul>
+        </div>
+      `;
+    };
+
+    const generateReportHtml = (hasReport, text, theme = 'slate') => {
+      if (!hasReport || !text) return '';
+      const borderColor = theme === 'rose' ? 'border-rose-100' : 'border-slate-100';
+      const bgColor = theme === 'rose' ? 'bg-rose-50/50' : 'bg-slate-50';
+      const textColor = theme === 'rose' ? 'text-rose-700' : 'text-slate-600';
+      const iconColor = theme === 'rose' ? 'text-rose-500' : 'text-slate-500';
+      const buttonHoverBg = theme === 'rose' ? 'hover:bg-rose-100' : 'hover:bg-slate-200';
+      // Escaping for dataset
+      const escapedText = text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+      return `
+        <div class="pt-3 border-t ${borderColor}">
+          <details class="group [&_summary::-webkit-details-marker]:hidden">
+            <summary class="flex items-center gap-1.5 text-sm font-medium ${textColor} cursor-pointer list-none select-none hover:opacity-80 transition-opacity">
+              <i data-lucide="clipboard-list" class="w-4 h-4 ${iconColor}"></i> 
+              查看檢查報告
+              <span class="ml-auto text-xs ${theme === 'rose' ? 'text-rose-400' : 'text-slate-400'} group-open:hidden">展開內容 ▼</span>
+              <span class="ml-auto text-xs ${theme === 'rose' ? 'text-rose-400' : 'text-slate-400'} hidden group-open:block">收起 ▲</span>
+            </summary>
+            <div class="relative mt-2">
+              <button class="copy-report-btn absolute top-2 right-2 p-1.5 rounded-md transition-colors ${buttonHoverBg} ${iconColor}" data-text="${escapedText}" title="複製報告內容">
+                <i data-lucide="copy" class="w-4 h-4 icon-copy"></i>
+                <i data-lucide="check" class="w-4 h-4 icon-check hidden text-emerald-500"></i>
+              </button>
+              <div class="p-3 pr-10 ${bgColor} border ${borderColor} rounded-lg text-sm ${textColor} whitespace-pre-wrap max-h-48 overflow-y-auto font-mono text-xs leading-relaxed">${text}</div>
+            </div>
+          </details>
+        </div>
+      `;
+    };
+
+    // --- Render Active Tracking ---
+    const renderActiveTracking = (trackingData) => {
+      const activeTrackingTabsContainer = document.getElementById('activeTrackingTabs');
+      const activeTrackingGrid = document.getElementById('activeTrackingGrid');
+      
+      // Render Tabs
+      activeTrackingTabsContainer.innerHTML = '';
+      if (trackingData.length > 0) {
+        const cats = trackingData.map(t => t.category);
+        const allTabs = ['全部', ...cats];
+        
+        allTabs.forEach(tab => {
+          const btn = document.createElement('button');
+          const isActive = activeTrackingTab === tab;
+          btn.className = `px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${isActive ? 'bg-rose-600 text-white shadow-sm' : 'bg-white text-rose-600 border border-rose-200 hover:bg-rose-50'}`;
+          btn.textContent = tab === '全部' ? '全部異常' : tab;
+          btn.onclick = () => {
+            activeTrackingTab = tab;
+            renderApp();
+          };
+          activeTrackingTabsContainer.appendChild(btn);
+        });
+        activeTrackingTabsContainer.parentElement.classList.remove('hidden');
+      } else {
+        activeTrackingTabsContainer.parentElement.classList.add('hidden');
+      }
+
+      // Render Grid
+      activeTrackingGrid.innerHTML = '';
+      const filtered = activeTrackingTab === '全部' ? trackingData : trackingData.filter(t => t.category === activeTrackingTab);
+
+      if (trackingData.length === 0) {
+        activeTrackingGrid.innerHTML = `
+          <div class="col-span-full bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-500 shadow-sm">
+            <i data-lucide="check-circle-2" class="w-8 h-8 mx-auto text-emerald-400 mb-2"></i>
+            <p class="text-sm">太棒了！根據最新紀錄，目前沒有需要特別追蹤的異常項目。</p>
+          </div>`;
+      } else if (filtered.length === 0) {
+        activeTrackingGrid.innerHTML = `
+          <div class="col-span-full bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-500 shadow-sm">
+            <p class="text-sm">此分類目前沒有追蹤中的異常。</p>
+          </div>`;
+      } else {
+        filtered.forEach(track => {
+          let abListHtml = track.abnormalities.map(ab => `
+            <div class="bg-white/60 rounded p-2 text-sm text-slate-700">
+              <div class="font-semibold text-rose-700 flex items-center gap-1.5">
+                 <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> ${ab.type}
+              </div>
+              ${(ab.location || ab.size) ? `
+                <div class="text-xs text-slate-500 mt-1 pl-5">
+                  ${ab.location ? `<span class="mr-2">📍 ${ab.location}</span>` : ''}
+                  ${ab.size ? `<span>📏 ${ab.size}</span>` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `).join('');
+
+          let freqHtml = track.frequency?.value ? `
+            <div class="mt-2 pt-3 border-t border-rose-200/50 text-xs text-rose-700 flex items-center gap-1">
+              <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+              醫囑建議: ${track.frequency.value} ${track.frequency.unit} 回診追蹤
+            </div>
+          ` : '';
+
+          const div = document.createElement('div');
+          div.className = "bg-rose-50 rounded-xl border border-rose-100 p-4 shadow-sm relative overflow-hidden flex flex-col";
+          div.innerHTML = `
+            <div class="absolute top-0 left-0 w-1 h-full bg-rose-400"></div>
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-bold text-rose-800 text-lg">${track.category}</h3>
+              <div class="text-xs text-rose-600 bg-rose-100 px-2 py-1 rounded-md font-medium">上次檢查: ${track.date}</div>
+            </div>
+            <div class="space-y-2 mb-3 flex-1">${abListHtml}</div>
+            ${freqHtml}
+            <div class="mt-2">${generateReportHtml(track.hasReport, track.reportText, 'rose')}</div>
+          `;
+          activeTrackingGrid.appendChild(div);
+        });
+      }
+      attachCopyEvents(activeTrackingGrid);
+    };
+
+    // --- Render History ---
+    const renderHistory = (availableCategories) => {
+      const historyTabsContainer = document.getElementById('historyTabs');
+      const historyListContainer = document.getElementById('historyListContainer');
+      const deleteModal = document.getElementById('deleteModal');
+
+      // Render Tabs
+      historyTabsContainer.innerHTML = '';
+      if (records.length > 0) {
+        const allTabs = ['全部', ...availableCategories];
+        allTabs.forEach(tab => {
+          const btn = document.createElement('button');
+          const isActive = activeTab === tab;
+          btn.className = `px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${isActive ? 'bg-slate-700 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`;
+          btn.textContent = tab === '全部' ? '全部紀錄' : tab;
+          btn.onclick = () => {
+            activeTab = tab;
+            renderApp();
+          };
+          historyTabsContainer.appendChild(btn);
+        });
+        historyTabsContainer.parentElement.classList.remove('hidden');
+      } else {
+        historyTabsContainer.parentElement.classList.add('hidden');
+      }
+
+      // Render List
+      historyListContainer.innerHTML = '';
+      const filtered = activeTab === '全部' ? records : records.filter(r => r.category === activeTab);
+
+      if (filtered.length === 0) {
+        historyListContainer.innerHTML = `
+          <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+            <i data-lucide="check-circle-2" class="w-12 h-12 mx-auto text-slate-300 mb-3"></i>
+            <p>${activeTab === '全部' ? '目前還沒有任何紀錄' : `目前沒有「${activeTab}」的追蹤紀錄`}</p>
+            ${activeTab === '全部' ? '<p class="text-sm mt-1">在左側表單新增您的第一筆追蹤資料吧！</p>' : ''}
+          </div>`;
+      } else {
+        filtered.forEach(record => {
+          const div = document.createElement('div');
+          const isEditing = editingRecordId === record.id;
+          div.className = `bg-white rounded-2xl shadow-sm border p-5 transition-colors group relative ${isEditing ? 'border-amber-400 ring-1 ring-amber-400' : 'border-slate-100 hover:border-teal-200'}`;
+          
+          let adviceHtml = '';
+          if (record.advice || record.frequency?.value) {
+            adviceHtml = `<div class="pt-3 border-t border-slate-100">`;
+            if (record.advice) adviceHtml += `<p class="text-sm text-slate-700 mb-2 whitespace-pre-line"><span class="font-medium text-slate-600">醫囑：</span>${record.advice}</p>`;
+            if (record.frequency?.value) adviceHtml += `<p class="text-sm text-teal-600 font-medium bg-teal-50 inline-block px-2 py-1 rounded">建議 ${record.frequency.value} ${record.frequency.unit} 回診追蹤</p>`;
+            adviceHtml += `</div>`;
+          }
+
+          div.innerHTML = `
+            <div class="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+              <button class="edit-record-btn text-slate-400 hover:text-amber-500 bg-slate-50 hover:bg-amber-50 rounded-full p-1.5 transition-colors" data-id="${record.id}" title="編輯">
+                <i data-lucide="edit-2" class="w-4 h-4"></i>
+              </button>
+              <button class="del-record-btn text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-full p-1.5 transition-colors" data-id="${record.id}" title="刪除">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <div class="flex flex-wrap items-baseline gap-3 mb-3 pr-16">
+              <span class="text-lg font-bold text-teal-700">${record.category}</span>
+              <span class="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
+                <i data-lucide="calendar" class="w-3 h-3"></i> ${record.date}
+              </span>
+              ${record.hospital ? `<span class="text-sm text-slate-600 flex items-center gap-1"><i data-lucide="hospital" class="w-3.5 h-3.5"></i> ${record.hospital}</span>` : ''}
+            </div>
+            ${generateAbnormalitiesHtml(record.abnormalities)}
+            ${adviceHtml}
+            ${generateReportHtml(record.hasReport, record.reportText, 'slate')}
+          `;
+          historyListContainer.appendChild(div);
+        });
+
+        // Attach events for records
+        document.querySelectorAll('.edit-record-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = btn.getAttribute('data-id');
+            const rec = records.find(r => r.id === id);
+            if (rec) loadRecordIntoForm(rec);
+            renderApp(); // To highlight editing card
+          });
+        });
+
+        document.querySelectorAll('.del-record-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            recordToDeleteId = btn.getAttribute('data-id');
+            deleteModal.classList.remove('hidden');
+          });
+        });
+
+        attachCopyEvents(historyListContainer);
+      }
+    };
+
+    const attachCopyEvents = (container) => {
+      container.querySelectorAll('.copy-report-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const textToCopy = btn.getAttribute('data-text');
+          try {
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("Copy");
+            textArea.remove();
+            
+            const copyIcon = btn.querySelector('.icon-copy');
+            const checkIcon = btn.querySelector('.icon-check');
+            copyIcon.classList.add('hidden');
+            checkIcon.classList.remove('hidden');
+            
+            setTimeout(() => {
+              copyIcon.classList.remove('hidden');
+              checkIcon.classList.add('hidden');
+            }, 2000);
+          } catch (err) {
+            console.error('Copy failed', err);
+          }
+        });
+      });
+    };
+
+    // --- Dom Ready Execution ---
+    document.addEventListener("DOMContentLoaded", () => {
+      setupPWAIcon();
+
+      // Bind global variables to DOM elements
+      categorySelect = document.getElementById('categorySelect');
+      customCategoryDiv = document.getElementById('customCategoryDiv');
+      customCategoryInput = document.getElementById('customCategoryInput');
+      hospitalDatalist = document.getElementById('hospital-list');
+      
+      const dateInput = document.getElementById('dateInput');
+      const hospitalInput = document.getElementById('hospitalInput');
+      const adviceInput = document.getElementById('adviceInput');
+      const freqUnitSelect = document.getElementById('freqUnitSelect');
+      const freqValueInput = document.getElementById('freqValueInput');
+      const hasReportCheckbox = document.getElementById('hasReportCheckbox');
+      const reportTextInput = document.getElementById('reportTextInput');
+      const abTypeInput = document.getElementById('abTypeInput');
+      const saveAbBtn = document.getElementById('saveAbBtn');
+      const cancelAbBtn = document.getElementById('cancelAbBtn');
+      const cancelEditBtn = document.getElementById('cancelEditBtn');
+      const saveRecordBtn = document.getElementById('saveRecordBtn');
+      const deleteModal = document.getElementById('deleteModal');
+      const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+      const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+      // Setup initial date
+      dateInput.value = new Date().toISOString().split('T')[0];
+
+      // Initial render based on LocalStorage
+      renderApp();
+
+      // --- Event Listeners Binding ---
+      categorySelect.addEventListener('change', toggleCustomCategory);
+      
+      abTypeInput.addEventListener('input', checkAbSaveBtnState);
+      
+      saveAbBtn.addEventListener('click', () => {
+        const type = abTypeInput.value.trim();
+        if (!type) return;
+        
+        if (editingAbId) {
+          const idx = abnormalities.findIndex(a => a.id === editingAbId);
+          if (idx !== -1) {
+            abnormalities[idx] = { 
+              ...abnormalities[idx], 
+              type, 
+              location: document.getElementById('abLocationInput').value, 
+              size: document.getElementById('abSizeInput').value 
+            };
+          }
+        } else {
+          abnormalities.push({
+            id: generateId(),
+            type,
+            location: document.getElementById('abLocationInput').value,
+            size: document.getElementById('abSizeInput').value
+          });
+        }
+        cancelAbEdit();
+        renderAbnormalitiesList();
+      });
+
+      cancelAbBtn.addEventListener('click', cancelAbEdit);
+
+      hasReportCheckbox.addEventListener('change', toggleReportText);
+
+      cancelEditBtn.addEventListener('click', resetMainForm);
+
+      saveRecordBtn.addEventListener('click', () => {
+        const finalCategory = categorySelect.value === 'custom' ? customCategoryInput.value.trim() : categorySelect.value;
+        const date = dateInput.value;
+        
+        if (!finalCategory || !date) {
+          setFormErrorMsg("請填寫日期與檢查項目！");
+          return;
+        }
+        setFormErrorMsg("");
+
+        const recordData = {
+          id: editingRecordId || generateId(),
+          date,
+          category: finalCategory,
+          hospital: hospitalInput.value,
+          advice: adviceInput.value,
+          frequency: {
+            value: freqValueInput.value ? Number(freqValueInput.value) : null,
+            unit: freqUnitSelect.value
+          },
+          abnormalities: [...abnormalities],
+          hasReport: hasReportCheckbox.checked,
+          reportText: hasReportCheckbox.checked ? reportTextInput.value : '',
+          updatedAt: new Date().toISOString()
+        };
+
+        if (editingRecordId) {
+          const idx = records.findIndex(r => r.id === editingRecordId);
+          if (idx !== -1) {
+            // 保留原本的 createdAt
+            recordData.createdAt = records[idx].createdAt;
+            records[idx] = recordData;
+          }
+        } else {
+          recordData.createdAt = new Date().toISOString();
+          records.push(recordData);
+        }
+
+        // 保存到 localStorage
+        saveRecordsToLocal(records);
+        
+        if (!editingRecordId && activeTab !== '全部' && activeTab !== finalCategory) {
+          activeTab = finalCategory;
+        }
+        
+        resetMainForm();
+        renderApp();
+      });
+
+      cancelDeleteBtn.addEventListener('click', () => {
+        recordToDeleteId = null;
+        deleteModal.classList.add('hidden');
+      });
+
+      confirmDeleteBtn.addEventListener('click', () => {
+        if (!recordToDeleteId) return;
+        
+        records = records.filter(r => r.id !== recordToDeleteId);
+        saveRecordsToLocal(records); // 更新到 localStorage
+        
+        if (editingRecordId === recordToDeleteId) {
+          resetMainForm();
+        }
+        
+        recordToDeleteId = null;
+        deleteModal.classList.add('hidden');
+        renderApp();
+      });
+    });
+
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans pb-12 relative">
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full animate-in fade-in zoom-in duration-200">
+      <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
+        確定要刪除？
+      </h3>
+      <p class="text-slate-600 mb-6 text-sm">
+        刪除後將無法復原這筆追蹤紀錄，您確定要繼續嗎？
+      </p>
+      <div class="flex justify-end gap-3">
+        <button id="cancelDeleteBtn" class="px-4 py-2 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition-colors">
+          取消
+        </button>
+        <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+          確定刪除
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-teal-600 text-white shadow-md">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
+      <i data-lucide="activity" class="w-6 h-6"></i>
+      <h1 class="text-xl font-bold tracking-wide">健康追蹤日誌</h1>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-8">
+    
+    <!-- Active Tracking Dashboard -->
+    <section>
+      <div class="flex items-center gap-2 mb-3 px-1">
+        <i data-lucide="activity-square" class="w-5 h-5 text-rose-500"></i>
+        <h2 class="text-lg font-semibold text-slate-800">目前追蹤中的異常狀況</h2>
+        <span class="text-xs font-normal text-slate-500 ml-1 hidden sm:inline">(依各項目最新檢查結果)</span>
+      </div>
+      <div id="activeTrackingTabsWrapper" class="hidden">
+        <div id="activeTrackingTabs" class="flex overflow-x-auto scrollbar-hide space-x-2 mb-4 pb-1"></div>
+      </div>
+      <div id="activeTrackingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Form Section -->
+      <section class="lg:col-span-5 space-y-6">
+        <div id="formContainer" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 transition-colors">
+          <div class="flex justify-between items-center mb-5">
+            <h2 class="text-lg font-semibold text-slate-700 flex items-center gap-2">
+              <span id="formTitleIcon"><i data-lucide="plus" class="w-5 h-5 text-teal-500"></i></span>
+              <span id="formTitleText">新增追蹤紀錄</span>
+            </h2>
+            <button id="cancelEditBtn" class="hidden text-xs text-slate-500 hover:text-slate-800 bg-slate-100 px-2 py-1 rounded">
+              取消編輯
+            </button>
+          </div>
+
+          <div class="space-y-5">
+            <!-- Basic Info -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1">
+                  <i data-lucide="calendar" class="w-4 h-4"></i> 檢查日期
+                </label>
+                <input type="date" id="dateInput" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1">
+                  <i data-lucide="activity" class="w-4 h-4"></i> 檢查項目
+                </label>
+                <select id="categorySelect" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"></select>
+                <div id="customCategoryDiv" class="hidden mt-2">
+                  <input type="text" id="customCategoryInput" placeholder="請輸入新項目名稱 (例如：甲狀腺)" class="w-full px-3 py-2 border border-teal-400 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-teal-50 placeholder-teal-400/70 shadow-inner">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1">
+                  <i data-lucide="hospital" class="w-4 h-4"></i> 檢查醫院
+                </label>
+                <input type="text" id="hospitalInput" list="hospital-list" placeholder="例如：台大醫院" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all">
+                <datalist id="hospital-list"></datalist>
+              </div>
+            </div>
+
+            <hr class="border-slate-100" />
+
+            <!-- Abnormalities -->
+            <div class="space-y-4">
+              <label class="block text-sm font-medium text-slate-600 flex items-center gap-1">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-amber-500"></i> 異常發現 (當次檢查結果)
+              </label>
+              
+              <div id="abListContainer" class="space-y-2 mb-3"></div>
+
+              <div id="abInputContainer" class="p-4 rounded-lg border bg-slate-50 border-slate-200 space-y-3 transition-colors">
+                <div id="editingAbLabel" class="hidden text-xs font-bold text-amber-600 mb-1 flex items-center gap-1">
+                  <i data-lucide="edit-2" class="w-3 h-3"></i> 正在編輯異常項目
+                </div>
+                <input type="text" id="abTypeInput" placeholder="名稱 (如：囊腫、結節)*" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-teal-500 outline-none">
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="text" id="abLocationInput" placeholder="位置 (如：左上)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-teal-500 outline-none">
+                  <input type="text" id="abSizeInput" placeholder="大小 (如：1.5cm)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-teal-500 outline-none">
+                </div>
+                <div class="flex gap-2">
+                  <button id="saveAbBtn" disabled class="flex-1 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-1 bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-50">
+                    <i data-lucide="plus" class="w-4 h-4"></i> <span id="saveAbText">加入異常紀錄</span>
+                  </button>
+                  <button id="cancelAbBtn" class="hidden py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md transition-colors" title="取消">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <hr class="border-slate-100" />
+
+            <!-- Report Text -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="hasReportCheckbox" class="w-4 h-4 text-teal-600 rounded border-slate-300 cursor-pointer">
+                <label for="hasReportCheckbox" class="text-sm font-medium text-slate-600 flex items-center gap-1.5 cursor-pointer select-none">
+                  <i data-lucide="clipboard-list" class="w-4 h-4"></i> 附上當次檢查報告
+                </label>
+              </div>
+              <div id="reportTextDiv" class="hidden pl-6">
+                <textarea id="reportTextInput" rows="5" placeholder="請貼上當次檢查的文字報告..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all resize-y font-mono"></textarea>
+              </div>
+            </div>
+
+            <hr class="border-slate-100" />
+
+            <!-- Advice & Freq -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1">
+                  <i data-lucide="stethoscope" class="w-4 h-4"></i> 醫師建議 / 醫囑
+                </label>
+                <textarea id="adviceInput" rows="3" placeholder="請輸入醫師的建議或注意事項..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all resize-none"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1">
+                  <i data-lucide="clock" class="w-4 h-4"></i> 下次追蹤頻率
+                </label>
+                <div class="flex gap-2">
+                  <select id="freqUnitSelect" class="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-white">
+                    <option value="月">月</option>
+                    <option value="年">年</option>
+                  </select>
+                  <input type="number" id="freqValueInput" min="1" placeholder="請輸入數字" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Msg -->
+            <p id="formError" class="hidden text-red-500 text-sm font-medium animate-pulse"></p>
+
+            <button id="saveRecordBtn" class="w-full py-3 font-semibold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 mt-4 bg-teal-600 hover:bg-teal-700 text-white">
+              <i data-lucide="save" class="w-5 h-5"></i>
+              <span id="saveRecordText">儲存本次紀錄</span>
+            </button>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- History Section -->
+      <section class="lg:col-span-7 space-y-4">
+        <div class="flex items-center gap-2 mb-2 px-1">
+          <i data-lucide="filter" class="w-5 h-5 text-slate-400"></i>
+          <h2 class="text-lg font-semibold text-slate-700">歷史紀錄</h2>
+        </div>
+
+        <div id="historyTabsWrapper" class="hidden">
+          <div id="historyTabs" class="flex overflow-x-auto scrollbar-hide space-x-2 pb-2"></div>
+        </div>
+
+        <div id="historyListContainer" class="space-y-4"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <style>
+    /* 隱藏原生 details 的箭頭 */
+    details > summary::-webkit-details-marker {
+      display: none;
+    }
+    /* 隱藏卷軸但保留功能 */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+  </style>
+</body>
+</html>

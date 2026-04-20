@@ -2,9 +2,20 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 針對手機版面的必要設定，確保加入主畫面時能以 App 模式呈現 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="健康追蹤">
   <title>健康追蹤</title>
   
+  <!-- === 這是 iPhone 桌面圖示 (Apple Touch Icon) 的 Base64 直接設定 === -->
+  <!-- 這是最穩定讓 iOS 抓到圖示的方法 -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMyZGQ0YmYiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMGY3NjZlIiAvPjwvbGluZWFyR3JhZGllbnQ+PGZpbHRlciBpZD0ic2hhZG93IiB4PSItMjAlIiB5PSItMjAlIiB3aWR0aD0iMTQwJSIgaGVpZ2h0PSIxNDAlIj48ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMjQiIHN0ZERldmlhdGlvbj0iMzIiIGZsb29kLWNvbG9yPSIjMDQyZjJlIiBmbG9vZC1vcGFjaXR5PSIwLjMiLz48L2ZpbHRlcj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMTAyNCIgZmlsbD0idXJsKCNiZykiIC8+PGcgZmlsdGVyPSJ1cmwoI3NoYWRvdykiPjxyZWN0IHg9IjI2MiIgeT0iMTgwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjY2NCIgcng9IjU2IiBmaWxsPSIjZmZmZmZmIiAvPjxyZWN0IHg9IjQxMiIgeT0iMTQwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiByeD0iMzIiIGZpbGw9IiM5OWY2ZTQiIC8+PGxpbmUgeDE9IjM2MiIgeTE9IjM2MCIgeDI9IjY2MiIgeTI9IjM2MCIgc3Ryb2tlPSIjY2NmYmYxIiBzdHJva2Utd2lkdGg9IjMyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMzYyIiB5MT0iNDYwIiB4Mj0iNTQyIiB5Mj0iNDYwIiBzdHJva2U9IiNjY2ZiZjEiIHN0cm9rZS13aWR0aD0iMzIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjUxMiIgY3k9IjY3MCIgcj0iMTgwIiBmaWxsPSIjMGQ5NDg4IiAvPjxwYXRoIGQ9Ik0gMzcwIDY3MCBMIDQ0MCA2NzAgTCA0ODUgNTUwIEwgNTM1IDc5MCBMIDU4NSA2NzAgTCA2NTQgNjcwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMzYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvZz48L3N2Zz4=">
+  
+  <!-- 一般網頁書籤圖示 -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMyZGQ0YmYiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMGY3NjZlIiAvPjwvbGluZWFyR3JhZGllbnQ+PGZpbHRlciBpZD0ic2hhZG93IiB4PSItMjAlIiB5PSItMjAlIiB3aWR0aD0iMTQwJSIgaGVpZ2h0PSIxNDAlIj48ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMjQiIHN0ZERldmlhdGlvbj0iMzIiIGZsb29kLWNvbG9yPSIjMDQyZjJlIiBmbG9vZC1vcGFjaXR5PSIwLjMiLz48L2ZpbHRlcj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMTAyNCIgZmlsbD0idXJsKCNiZykiIC8+PGcgZmlsdGVyPSJ1cmwoI3NoYWRvdykiPjxyZWN0IHg9IjI2MiIgeT0iMTgwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjY2NCIgcng9IjU2IiBmaWxsPSIjZmZmZmZmIiAvPjxyZWN0IHg9IjQxMiIgeT0iMTQwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiByeD0iMzIiIGZpbGw9IiM5OWY2ZTQiIC8+PGxpbmUgeDE9IjM2MiIgeTE9IjM2MCIgeDI9IjY2MiIgeTI9IjM2MCIgc3Ryb2tlPSIjY2NmYmYxIiBzdHJva2Utd2lkdGg9IjMyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMzYyIiB5MT0iNDYwIiB4Mj0iNTQyIiB5Mj0iNDYwIiBzdHJva2U9IiNjY2ZiZjEiIHN0cm9rZS13aWR0aD0iMzIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjUxMiIgY3k9IjY3MCIgcj0iMTgwIiBmaWxsPSIjMGQ5NDg4IiAvPjxwYXRoIGQ9Ik0gMzcwIDY3MCBMIDQ0MCA2NzAgTCA0ODUgNTUwIEwgNTM1IDc5MCBMIDU4NSA2NzAgTCA2NTQgNjcwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMzYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvZz48L3N2Zz4=">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -15,7 +26,6 @@
     // --- Local Storage Data Management ---
     const STORAGE_KEY = 'health_tracking_records';
     
-    // 初始化或讀取紀錄
     const loadRecordsFromLocal = () => {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -33,7 +43,6 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsToSave));
     };
 
-    // 生成隨機 ID
     const generateId = () => {
       return Date.now().toString(36) + Math.random().toString(36).substring(2);
     };
@@ -50,38 +59,16 @@
     let activeTrackingTab = '全部';
     let recordToDeleteId = null;
 
-    // --- 動態注入 iOS 桌面圖示 ---
-    const setupPWAIcon = () => {
-      const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><defs><linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2dd4bf" /><stop offset="100%" stop-color="#0f766e" /></linearGradient><filter id="iconShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#042f2e" flood-opacity="0.3" /></filter><linearGradient id="highlight" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" /><stop offset="100%" stop-color="#ffffff" stop-opacity="0" /></linearGradient></defs><rect width="1024" height="1024" fill="url(#bgGradient)" /><rect width="1024" height="1024" fill="url(#highlight)" /><g filter="url(#iconShadow)"><rect x="312" y="232" width="400" height="520" rx="48" fill="#ffffff" /><line x1="392" y1="332" x2="632" y2="332" stroke="#ccfbf1" stroke-width="24" stroke-linecap="round" /><line x1="392" y1="412" x2="552" y2="412" stroke="#ccfbf1" stroke-width="24" stroke-linecap="round" /><circle cx="512" cy="612" r="160" fill="#0d9488" /><path d="M 392 612 L 452 612 L 492 532 L 532 692 L 572 612 L 632 612" fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" /></g></svg>`;
-      const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgIcon)}`;
-
-      if (!document.querySelector('link[rel="apple-touch-icon"]')) {
-        const appleIcon = document.createElement('link');
-        appleIcon.rel = 'apple-touch-icon';
-        appleIcon.href = svgDataUrl;
-        document.head.appendChild(appleIcon);
-
-        const favicon = document.createElement('link');
-        favicon.rel = 'icon';
-        favicon.type = 'image/svg+xml';
-        favicon.href = svgDataUrl;
-        document.head.appendChild(favicon);
-      }
-    };
-
     // --- Core Render Logic ---
     const renderApp = () => {
-      // 確保資料是最新的排序 (由新到舊)
       records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       const availableCategories = getAvailableCategories();
       const pastHospitals = getPastHospitals();
       
-      // Update Datalists
       updateSelectOptions(categorySelect, DEFAULT_CATEGORIES, availableCategories);
       hospitalDatalist.innerHTML = pastHospitals.map(h => `<option value="${h}">`).join('');
 
-      // Auto-correct tabs
       if (activeTab !== '全部' && !availableCategories.includes(activeTab)) activeTab = '全部';
       
       const activeTrackingData = getActiveTracking();
@@ -184,7 +171,6 @@
         abListContainer.appendChild(div);
       });
 
-      // Attach events
       document.querySelectorAll('.edit-ab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -294,7 +280,6 @@
       renderAbnormalitiesList();
       setFormErrorMsg('');
 
-      // UI Reset
       const formContainer = document.getElementById('formContainer');
       const saveRecordBtn = document.getElementById('saveRecordBtn');
       formContainer.classList.replace('border-amber-300', 'border-slate-100');
@@ -335,7 +320,6 @@
       renderAbnormalitiesList();
       setFormErrorMsg('');
 
-      // UI update for editing state
       const formContainer = document.getElementById('formContainer');
       const saveRecordBtn = document.getElementById('saveRecordBtn');
       formContainer.classList.replace('border-slate-100', 'border-amber-300');
@@ -350,7 +334,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // --- Card Rendering Generators ---
     const generateAbnormalitiesHtml = (abs) => {
       if (!abs || abs.length === 0) return `<div class="mb-4 text-sm text-slate-400 italic">無異常發現紀錄</div>`;
       
@@ -384,7 +367,6 @@
       const textColor = theme === 'rose' ? 'text-rose-700' : 'text-slate-600';
       const iconColor = theme === 'rose' ? 'text-rose-500' : 'text-slate-500';
       const buttonHoverBg = theme === 'rose' ? 'hover:bg-rose-100' : 'hover:bg-slate-200';
-      // Escaping for dataset
       const escapedText = text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
       return `
@@ -408,12 +390,10 @@
       `;
     };
 
-    // --- Render Active Tracking ---
     const renderActiveTracking = (trackingData) => {
       const activeTrackingTabsContainer = document.getElementById('activeTrackingTabs');
       const activeTrackingGrid = document.getElementById('activeTrackingGrid');
       
-      // Render Tabs
       activeTrackingTabsContainer.innerHTML = '';
       if (trackingData.length > 0) {
         const cats = trackingData.map(t => t.category);
@@ -435,7 +415,6 @@
         activeTrackingTabsContainer.parentElement.classList.add('hidden');
       }
 
-      // Render Grid
       activeTrackingGrid.innerHTML = '';
       const filtered = activeTrackingTab === '全部' ? trackingData : trackingData.filter(t => t.category === activeTrackingTab);
 
@@ -491,13 +470,11 @@
       attachCopyEvents(activeTrackingGrid);
     };
 
-    // --- Render History ---
     const renderHistory = (availableCategories) => {
       const historyTabsContainer = document.getElementById('historyTabs');
       const historyListContainer = document.getElementById('historyListContainer');
       const deleteModal = document.getElementById('deleteModal');
 
-      // Render Tabs
       historyTabsContainer.innerHTML = '';
       if (records.length > 0) {
         const allTabs = ['全部', ...availableCategories];
@@ -517,7 +494,6 @@
         historyTabsContainer.parentElement.classList.add('hidden');
       }
 
-      // Render List
       historyListContainer.innerHTML = '';
       const filtered = activeTab === '全部' ? records : records.filter(r => r.category === activeTab);
 
@@ -565,13 +541,12 @@
           historyListContainer.appendChild(div);
         });
 
-        // Attach events for records
         document.querySelectorAll('.edit-record-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const id = btn.getAttribute('data-id');
             const rec = records.find(r => r.id === id);
             if (rec) loadRecordIntoForm(rec);
-            renderApp(); // To highlight editing card
+            renderApp();
           });
         });
 
@@ -617,9 +592,6 @@
 
     // --- Dom Ready Execution ---
     document.addEventListener("DOMContentLoaded", () => {
-      setupPWAIcon();
-
-      // Bind global variables to DOM elements
       categorySelect = document.getElementById('categorySelect');
       customCategoryDiv = document.getElementById('customCategoryDiv');
       customCategoryInput = document.getElementById('customCategoryInput');
@@ -641,13 +613,10 @@
       const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
       const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
-      // Setup initial date
       dateInput.value = new Date().toISOString().split('T')[0];
 
-      // Initial render based on LocalStorage
       renderApp();
 
-      // --- Event Listeners Binding ---
       categorySelect.addEventListener('change', toggleCustomCategory);
       
       abTypeInput.addEventListener('input', checkAbSaveBtnState);
@@ -713,7 +682,6 @@
         if (editingRecordId) {
           const idx = records.findIndex(r => r.id === editingRecordId);
           if (idx !== -1) {
-            // 保留原本的 createdAt
             recordData.createdAt = records[idx].createdAt;
             records[idx] = recordData;
           }
@@ -722,7 +690,6 @@
           records.push(recordData);
         }
 
-        // 保存到 localStorage
         saveRecordsToLocal(records);
         
         if (!editingRecordId && activeTab !== '全部' && activeTab !== finalCategory) {
@@ -742,7 +709,7 @@
         if (!recordToDeleteId) return;
         
         records = records.filter(r => r.id !== recordToDeleteId);
-        saveRecordsToLocal(records); // 更新到 localStorage
+        saveRecordsToLocal(records); 
         
         if (editingRecordId === recordToDeleteId) {
           resetMainForm();
@@ -946,18 +913,9 @@
   </main>
 
   <style>
-    /* 隱藏原生 details 的箭頭 */
-    details > summary::-webkit-details-marker {
-      display: none;
-    }
-    /* 隱藏卷軸但保留功能 */
-    .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-    }
-    .scrollbar-hide {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
+    details > summary::-webkit-details-marker { display: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </body>
 </html>

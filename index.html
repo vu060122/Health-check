@@ -8,14 +8,100 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="健康追蹤">
   <title>健康追蹤</title>
-  
-  <!-- === 這是 iPhone 桌面圖示 (Apple Touch Icon) 的 Base64 直接設定 === -->
-  <!-- 這是最穩定讓 iOS 抓到圖示的方法 -->
-  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMyZGQ0YmYiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMGY3NjZlIiAvPjwvbGluZWFyR3JhZGllbnQ+PGZpbHRlciBpZD0ic2hhZG93IiB4PSItMjAlIiB5PSItMjAlIiB3aWR0aD0iMTQwJSIgaGVpZ2h0PSIxNDAlIj48ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMjQiIHN0ZERldmlhdGlvbj0iMzIiIGZsb29kLWNvbG9yPSIjMDQyZjJlIiBmbG9vZC1vcGFjaXR5PSIwLjMiLz48L2ZpbHRlcj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMTAyNCIgZmlsbD0idXJsKCNiZykiIC8+PGcgZmlsdGVyPSJ1cmwoI3NoYWRvdykiPjxyZWN0IHg9IjI2MiIgeT0iMTgwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjY2NCIgcng9IjU2IiBmaWxsPSIjZmZmZmZmIiAvPjxyZWN0IHg9IjQxMiIgeT0iMTQwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiByeD0iMzIiIGZpbGw9IiM5OWY2ZTQiIC8+PGxpbmUgeDE9IjM2MiIgeTE9IjM2MCIgeDI9IjY2MiIgeTI9IjM2MCIgc3Ryb2tlPSIjY2NmYmYxIiBzdHJva2Utd2lkdGg9IjMyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMzYyIiB5MT0iNDYwIiB4Mj0iNTQyIiB5Mj0iNDYwIiBzdHJva2U9IiNjY2ZiZjEiIHN0cm9rZS13aWR0aD0iMzIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjUxMiIgY3k9IjY3MCIgcj0iMTgwIiBmaWxsPSIjMGQ5NDg4IiAvPjxwYXRoIGQ9Ik0gMzcwIDY3MCBMIDQ0MCA2NzAgTCA0ODUgNTUwIEwgNTM1IDc5MCBMIDU4NSA2NzAgTCA2NTQgNjcwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMzYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvZz48L3N2Zz4=">
-  
-  <!-- 一般網頁書籤圖示 -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMyZGQ0YmYiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMGY3NjZlIiAvPjwvbGluZWFyR3JhZGllbnQ+PGZpbHRlciBpZD0ic2hhZG93IiB4PSItMjAlIiB5PSItMjAlIiB3aWR0aD0iMTQwJSIgaGVpZ2h0PSIxNDAlIj48ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMjQiIHN0ZERldmlhdGlvbj0iMzIiIGZsb29kLWNvbG9yPSIjMDQyZjJlIiBmbG9vZC1vcGFjaXR5PSIwLjMiLz48L2ZpbHRlcj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMTAyNCIgZmlsbD0idXJsKCNiZykiIC8+PGcgZmlsdGVyPSJ1cmwoI3NoYWRvdykiPjxyZWN0IHg9IjI2MiIgeT0iMTgwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjY2NCIgcng9IjU2IiBmaWxsPSIjZmZmZmZmIiAvPjxyZWN0IHg9IjQxMiIgeT0iMTQwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiByeD0iMzIiIGZpbGw9IiM5OWY2ZTQiIC8+PGxpbmUgeDE9IjM2MiIgeTE9IjM2MCIgeDI9IjY2MiIgeTI9IjM2MCIgc3Ryb2tlPSIjY2NmYmYxIiBzdHJva2Utd2lkdGg9IjMyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMzYyIiB5MT0iNDYwIiB4Mj0iNTQyIiB5Mj0iNDYwIiBzdHJva2U9IiNjY2ZiZjEiIHN0cm9rZS13aWR0aD0iMzIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjUxMiIgY3k9IjY3MCIgcj0iMTgwIiBmaWxsPSIjMGQ5NDg4IiAvPjxwYXRoIGQ9Ik0gMzcwIDY3MCBMIDQ0MCA2NzAgTCA0ODUgNTUwIEwgNTM1IDc5MCBMIDU4NSA2NzAgTCA2NTQgNjcwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMzYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvZz48L3N2Zz4=">
 
+  <!-- === 核心解法：用 JavaScript 動態生成 PNG 圖示給 iPhone === -->
+  <script>
+    (function() {
+      // 建立一個隱藏的畫布來繪製圖示
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // 1. 繪製藍綠色漸層背景
+      const bg = ctx.createLinearGradient(0, 0, 512, 512);
+      bg.addColorStop(0, '#2dd4bf'); // Teal-400
+      bg.addColorStop(1, '#0f766e'); // Teal-700
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 512, 512);
+
+      // 2. 設定陰影效果
+      ctx.shadowColor = 'rgba(4, 47, 46, 0.3)';
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetY = 12;
+
+      // 畫圓角矩形的輔助函式 (確保所有瀏覽器相容)
+      function drawRoundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x, y, x + r, y, r);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // 3. 繪製病歷夾底板
+      ctx.fillStyle = '#ffffff';
+      drawRoundRect(156, 116, 200, 260, 24);
+      
+      // 關閉陰影以免影響後續圖形
+      ctx.shadowColor = 'transparent';
+
+      // 4. 繪製病歷夾頂部金屬夾
+      ctx.fillStyle = '#99f6e4';
+      drawRoundRect(206, 70, 100, 40, 16);
+
+      // 5. 繪製報告上的裝飾線條
+      ctx.strokeStyle = '#ccfbf1';
+      ctx.lineWidth = 12;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(196, 166); ctx.lineTo(316, 166);
+      ctx.moveTo(196, 206); ctx.lineTo(276, 206);
+      ctx.stroke();
+
+      // 6. 繪製追蹤圓形徽章
+      ctx.fillStyle = '#0d9488';
+      ctx.beginPath();
+      ctx.arc(256, 306, 80, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 7. 繪製心電圖波浪線
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 16;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(196, 306);
+      ctx.lineTo(226, 306);
+      ctx.lineTo(246, 266);
+      ctx.lineTo(266, 346);
+      ctx.lineTo(286, 306);
+      ctx.lineTo(316, 306);
+      ctx.stroke();
+
+      // 將畫好的圖示轉換為 iOS 最愛的 PNG 格式 (Base64)
+      const iconPngUrl = canvas.toDataURL('image/png');
+
+      // 建立並塞入 apple-touch-icon 標籤
+      const appleIcon = document.createElement('link');
+      appleIcon.rel = 'apple-touch-icon';
+      appleIcon.href = iconPngUrl;
+      document.head.appendChild(appleIcon);
+
+      // 同時也建立一般的網頁標籤圖示
+      const favicon = document.createElement('link');
+      favicon.rel = 'icon';
+      favicon.href = iconPngUrl;
+      document.head.appendChild(favicon);
+    })();
+  </script>
+  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   

@@ -2,35 +2,30 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <!-- 針對手機版面的必要設定，確保加入主畫面時能以 App 模式呈現 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="健康追蹤">
   <title>健康追蹤</title>
 
-  <!-- === 核心解法：用 JavaScript 動態生成 PNG 圖示給 iPhone === -->
+  <!-- === iOS 桌面圖示 (Apple Touch Icon) 的動態生成 === -->
   <script>
     (function() {
-      // 建立一個隱藏的畫布來繪製圖示
       const canvas = document.createElement('canvas');
       canvas.width = 512;
       canvas.height = 512;
       const ctx = canvas.getContext('2d');
 
-      // 1. 繪製藍綠色漸層背景
       const bg = ctx.createLinearGradient(0, 0, 512, 512);
-      bg.addColorStop(0, '#2dd4bf'); // Teal-400
-      bg.addColorStop(1, '#0f766e'); // Teal-700
+      bg.addColorStop(0, '#2dd4bf'); 
+      bg.addColorStop(1, '#0f766e'); 
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, 512, 512);
 
-      // 2. 設定陰影效果
       ctx.shadowColor = 'rgba(4, 47, 46, 0.3)';
       ctx.shadowBlur = 16;
       ctx.shadowOffsetY = 12;
 
-      // 畫圓角矩形的輔助函式 (確保所有瀏覽器相容)
       function drawRoundRect(x, y, w, h, r) {
         ctx.beginPath();
         ctx.moveTo(x + r, y);
@@ -46,18 +41,14 @@
         ctx.fill();
       }
 
-      // 3. 繪製病歷夾底板
       ctx.fillStyle = '#ffffff';
       drawRoundRect(156, 116, 200, 260, 24);
       
-      // 關閉陰影以免影響後續圖形
       ctx.shadowColor = 'transparent';
 
-      // 4. 繪製病歷夾頂部金屬夾
       ctx.fillStyle = '#99f6e4';
       drawRoundRect(206, 70, 100, 40, 16);
 
-      // 5. 繪製報告上的裝飾線條
       ctx.strokeStyle = '#ccfbf1';
       ctx.lineWidth = 12;
       ctx.lineCap = 'round';
@@ -66,13 +57,11 @@
       ctx.moveTo(196, 206); ctx.lineTo(276, 206);
       ctx.stroke();
 
-      // 6. 繪製追蹤圓形徽章
       ctx.fillStyle = '#0d9488';
       ctx.beginPath();
       ctx.arc(256, 306, 80, 0, Math.PI * 2);
       ctx.fill();
 
-      // 7. 繪製心電圖波浪線
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 16;
       ctx.lineJoin = 'round';
@@ -85,16 +74,13 @@
       ctx.lineTo(316, 306);
       ctx.stroke();
 
-      // 將畫好的圖示轉換為 iOS 最愛的 PNG 格式 (Base64)
       const iconPngUrl = canvas.toDataURL('image/png');
 
-      // 建立並塞入 apple-touch-icon 標籤
       const appleIcon = document.createElement('link');
       appleIcon.rel = 'apple-touch-icon';
       appleIcon.href = iconPngUrl;
       document.head.appendChild(appleIcon);
 
-      // 同時也建立一般的網頁標籤圖示
       const favicon = document.createElement('link');
       favicon.rel = 'icon';
       favicon.href = iconPngUrl;
@@ -531,12 +517,21 @@
             </div>
           `).join('');
 
-          let freqHtml = track.frequency?.value ? `
-            <div class="mt-2 pt-3 border-t border-rose-200/50 text-xs text-rose-700 flex items-center gap-1">
-              <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-              醫囑建議: ${track.frequency.value} ${track.frequency.unit} 回診追蹤
-            </div>
-          ` : '';
+          // 修正：補上醫囑建議顯示 (Advice + Frequency)
+          let adviceHtml = '';
+          if (track.advice || track.frequency?.value) {
+            adviceHtml = `<div class="mt-2 pt-3 border-t border-rose-200/50">`;
+            if (track.advice) {
+              adviceHtml += `<p class="text-sm text-rose-900 mb-2 whitespace-pre-line"><span class="font-bold text-rose-700">醫囑：</span>${track.advice}</p>`;
+            }
+            if (track.frequency?.value) {
+              adviceHtml += `<div class="text-xs text-rose-700 flex items-center gap-1 font-medium">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                建議: ${track.frequency.value} ${track.frequency.unit} 回診追蹤
+              </div>`;
+            }
+            adviceHtml += `</div>`;
+          }
 
           const div = document.createElement('div');
           div.className = "bg-rose-50 rounded-xl border border-rose-100 p-4 shadow-sm relative overflow-hidden flex flex-col";
@@ -547,7 +542,7 @@
               <div class="text-xs text-rose-600 bg-rose-100 px-2 py-1 rounded-md font-medium">上次檢查: ${track.date}</div>
             </div>
             <div class="space-y-2 mb-3 flex-1">${abListHtml}</div>
-            ${freqHtml}
+            ${adviceHtml}
             <div class="mt-2">${generateReportHtml(track.hasReport, track.reportText, 'rose')}</div>
           `;
           activeTrackingGrid.appendChild(div);
@@ -695,13 +690,80 @@
       const cancelAbBtn = document.getElementById('cancelAbBtn');
       const cancelEditBtn = document.getElementById('cancelEditBtn');
       const saveRecordBtn = document.getElementById('saveRecordBtn');
+      
       const deleteModal = document.getElementById('deleteModal');
       const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
       const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
+      const dataModal = document.getElementById('dataModal');
+      const openDataModalBtn = document.getElementById('openDataModalBtn');
+      const closeDataModalBtn = document.getElementById('closeDataModalBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const importBtn = document.getElementById('importBtn');
+      const importInput = document.getElementById('importInput');
+
       dateInput.value = new Date().toISOString().split('T')[0];
 
       renderApp();
+
+      // --- 資料備份與還原事件 ---
+      openDataModalBtn.addEventListener('click', () => {
+        dataModal.classList.remove('hidden');
+      });
+
+      closeDataModalBtn.addEventListener('click', () => {
+        dataModal.classList.add('hidden');
+      });
+
+      // 匯出資料
+      exportBtn.addEventListener('click', () => {
+        const dataStr = localStorage.getItem(STORAGE_KEY) || '[]';
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().split('T')[0];
+        
+        a.href = url;
+        a.download = `健康追蹤備份_${dateStr}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // 觸發選擇檔案
+      importBtn.addEventListener('click', () => {
+        importInput.click();
+      });
+
+      // 處理檔案匯入
+      importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const importedData = JSON.parse(event.target.result);
+            if (!Array.isArray(importedData)) {
+              throw new Error("無效的資料格式：必須為陣列");
+            }
+            
+            if (confirm('⚠️ 警告：匯入將會「完全覆蓋」您目前裝置上的所有紀錄，您確定要繼續嗎？')) {
+              records = importedData;
+              saveRecordsToLocal(records);
+              renderApp();
+              alert('✅ 資料匯入成功！');
+              dataModal.classList.add('hidden');
+            }
+          } catch (err) {
+            alert('❌ 匯入失敗：檔案格式錯誤或已損毀。');
+            console.error("匯入錯誤", err);
+          }
+          // 重置 input 以允許重複選擇相同檔案
+          importInput.value = '';
+        };
+        reader.readAsText(file);
+      });
+
 
       categorySelect.addEventListener('change', toggleCustomCategory);
       
@@ -811,7 +873,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-12 relative">
 
-  <!-- Delete Confirmation Modal -->
+  <!-- 刪除確認 Modal -->
   <div id="deleteModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full animate-in fade-in zoom-in duration-200">
       <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
@@ -832,11 +894,59 @@
     </div>
   </div>
 
+  <!-- 資料備份與還原 Modal -->
+  <div id="dataModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full animate-in fade-in zoom-in duration-200 relative">
+      
+      <button id="closeDataModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+        <i data-lucide="database" class="w-5 h-5 text-teal-600"></i>
+        資料備份與還原
+      </h3>
+      <p class="text-slate-500 mb-6 text-sm">
+        所有資料目前都儲存在本瀏覽器中。為避免遺失，建議您定期匯出備份檔。
+      </p>
+
+      <div class="space-y-4">
+        <!-- 匯出 -->
+        <div class="p-4 border border-teal-100 bg-teal-50 rounded-xl">
+          <h4 class="font-bold text-teal-800 text-sm mb-1">匯出備份檔 (.json)</h4>
+          <p class="text-xs text-teal-600 mb-3">將目前的紀錄下載到您的裝置中妥善保存。</p>
+          <button id="exportBtn" class="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 text-sm">
+            <i data-lucide="download" class="w-4 h-4"></i> 下載資料備份
+          </button>
+        </div>
+
+        <!-- 匯入 -->
+        <div class="p-4 border border-slate-200 bg-slate-50 rounded-xl">
+          <h4 class="font-bold text-slate-700 text-sm mb-1">匯入備份檔</h4>
+          <p class="text-xs text-slate-500 mb-3">選擇之前下載的備份檔，<strong class="text-red-500">此動作將會覆蓋現有資料</strong>。</p>
+          <div class="relative">
+            <!-- 隱藏的檔案輸入框 -->
+            <input type="file" id="importInput" accept=".json" class="hidden" />
+            <button id="importBtn" class="w-full py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 text-sm">
+              <i data-lucide="upload" class="w-4 h-4"></i> 從裝置選擇檔案
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="bg-teal-600 text-white shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
-      <i data-lucide="activity" class="w-6 h-6"></i>
-      <h1 class="text-xl font-bold tracking-wide">健康追蹤日誌</h1>
+    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center gap-2">
+      <div class="flex items-center gap-2">
+        <i data-lucide="activity" class="w-6 h-6"></i>
+        <h1 class="text-xl font-bold tracking-wide">健康追蹤日誌</h1>
+      </div>
+      <!-- 備份設定按鈕 -->
+      <button id="openDataModalBtn" class="p-2 hover:bg-teal-700 rounded-full transition-colors bg-teal-600/50" title="資料備份管理">
+        <i data-lucide="settings" class="w-5 h-5 text-teal-50"></i>
+      </button>
     </div>
   </header>
 
